@@ -6,8 +6,8 @@ const Mongoose = require('mongoose')
 const userSchema = require('./Schemes/User')
 const noImage = require('./noImage')
 const { MessageMedia } = require('whatsapp-web.js')
-
-dotenv.config()
+// if(!process.env.production)
+// dotenv.config()
 
 const pool = []
 const media = new MessageMedia('image/png', noImage, 'noImage')
@@ -33,9 +33,14 @@ async function App() {
  console.log('handshaking sucessful creating bot')
  try {
   const client = new Client({
-   authStrategy: new LocalAuth(),
+//    authStrategy: new LocalAuth(),
    // authTimeoutMs: 120000,
    qrMaxRetries: 5,
+   puppeteer: {
+    args: [
+        '--no-sandbox',
+    ],
+},
   })
 
   client.on('message', async message => {
