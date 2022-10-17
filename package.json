@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js --ignore /.wwebjs_auth/"
+    "start": "node index.js --ignore /.wwebjs_auth/"
   },
   "author": "",
   "license": "ISC",
