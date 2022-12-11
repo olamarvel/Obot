@@ -1,5 +1,5 @@
-import { onwer } from "./const.js";
-export function sendHelpSuport(message) {
+const { onwer } = require("./const.js");
+function sendHelpSuport(message) {
   message.sendMessage("Error occured while validating user");
   message.sendMessage(
     "pls try again if problem persist /n try speaking to a human"
@@ -7,7 +7,7 @@ export function sendHelpSuport(message) {
   message.reply(constants.onwer);
 }
 
-export function sendCommandNotSupported(message) {
+function sendCommandNotSupported(message) {
   message.reply("your messgage or command id not support ");
   message.reply("check below to see a short list ");
   message.reply("type {_blank_} to  .| ");
@@ -27,9 +27,15 @@ export function sendCommandNotSupported(message) {
  * @param {String} string
  * @returns {Array} commands
  */
-export function sanitizeMessage(string = "") {
+function sanitizeMessage(string = "") {
   let D = string.trim().toLowerCase();
   if (!D.startsWith("!")) return false;
   D = D.substring(1);
   return D.split("_");
 }
+
+module.exports = {
+  sendCommandNotSupported,
+  sendHelpSuport,
+  sanitizeMessage,
+};

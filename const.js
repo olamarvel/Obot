@@ -1,4 +1,4 @@
 const onwer =  08064526418
-export {
+module.exports = {
     onwer
 }
