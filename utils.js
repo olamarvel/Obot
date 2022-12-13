@@ -1,14 +1,14 @@
 const { onwer } = require("./const.js");
 function sendHelpSuport(message) {
-  message.sendMessage("Error occured while validating user");
-  message.sendMessage(
+  message.reply("Error occured while validating user");
+  message.reply(
     "pls try again if problem persist /n try speaking to a human"
   );
   message.reply(constants.onwer);
 }
 
 function sendCommandNotSupported(message) {
-  message.reply("your messgage or command id not support ");
+  message.reply("your messgage or command is not support ");
   message.reply("check below to see a short list ");
   message.reply("type {_blank_} to  .| ");
   message.reply("type {_blank_} to  .| ");
