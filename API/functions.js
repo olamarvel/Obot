@@ -19,7 +19,7 @@ async function requestNews({ ISO = 'ng', search = '' }) {
 
 function format(art) {
  return {
-  image: art.urlToImge || undefined,
+  image: art.urlToImage,
   body: {
    title: art.title,
    description: art.description,

@@ -6,10 +6,13 @@ const Mongoose = require('mongoose')
 const userSchema = require('./Schemes/User')
 const noImage = require('./noImage')
 const { MessageMedia } = require('whatsapp-web.js')
+const fetch = require('node-fetch')
+
 const {
  sendHelpSuport,
  sanitizeMessage,
  sendCommandNotSupported,
+ formatNews,
 } = require('./utils')
 if (!process.env.production) dotenv.config()
 
@@ -131,13 +134,45 @@ async function App() {
   */
 
  async function handleMassage(message) {
-  //   try {
-  const commands = sanitizeMessage(message.body)
-  if (!commands) {
+  const chat = await message.getChat()
+  const [endpoint, ...commands] = sanitizeMessage(message.body)
+  if (!endpoint) {
    sendCommandNotSupported(message)
    return
   }
-  console.log(commands)
+  console.log(endpoint)
+  const url = 'http://localhost:3000/' + endpoint + '/' + commands.join('/')
+  console.log(url)
+  switch (endpoint) {
+   case 'news':
+    const result = await fetch(url, {
+     method: 'get', // *GET, POST, PUT, DELETE, etc.
+     headers: {
+      'Content-Type': 'application/json',
+     },
+    //  body: JSON.stringify({
+    //   ISO: commands[0] || 'ng',
+    //   query: commands[1] || '',
+    //  }),
+    })
+    if (result.status !== 200) {
+     sendHelpSuport(message)
+     return
+    }
+
+    const articles = await result.json()
+    articles
+     .map(article => formatNews(article))
+     .forEach(({ image, body }) => {
+      chat.sendMessage(image, { caption: body })
+     })
+
+    break
+
+   default:
+    break
+  }
+
   //    const command = commands[0]
   //    const API = stages(command)
   //    console.log(API)
