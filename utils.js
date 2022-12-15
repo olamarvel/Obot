@@ -47,6 +47,18 @@ async function formatNews(article) {
  }
 }
 
+function formatBible(passage, chapter, verse, text) {
+ return `
+    The book of ${passage} chapter ${chapter} verse ${verse}
+    ${text}
+    The above bilical passage was powered by Obot using labs.bible.org.
+    Obot does not lay claim to any of the biblical passages versioning or text.
+    Any name or trademark are subject to their respective owners and their copyrights. 
+    Powered by olamarvel , <olamarvel /> and olamarvel media 
+    follow at @olamarvel_web, or speak with a human by visiting ${constants.site} or calling ${constants.onwer}
+  
+  `
+}
 
 function stringify(article) {
  return `${article.title || 'this news has no tittle '} 
@@ -70,5 +82,6 @@ module.exports = {
  sendCommandNotSupported,
  sendHelpSuport,
  sanitizeMessage,
- formatNews
+ formatNews,
+ formatBible,
 }

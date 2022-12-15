@@ -13,6 +13,7 @@ const {
  sanitizeMessage,
  sendCommandNotSupported,
  formatNews,
+ formatBible,
 } = require('./utils')
 if (!process.env.production) dotenv.config()
 
@@ -150,25 +151,38 @@ async function App() {
      headers: {
       'Content-Type': 'application/json',
      },
-    //  body: JSON.stringify({
-    //   ISO: commands[0] || 'ng',
-    //   query: commands[1] || '',
-    //  }),
     })
     if (result.status !== 200) {
      sendHelpSuport(message)
      return
     }
-
-    const articles = await result.json()
-    articles
-     .map(article => formatNews(article))
-     .forEach(({ image, body }) => {
-      chat.sendMessage(image, { caption: body })
-     })
-
+    let json = await result.json()
+    json = json.map(formatNews)
+    // console.log(json)
+    let articles = await Promise.allSettled(json)
+    articles.forEach(({ value }) => {
+     if (!value) return
+     const { image, body } = value
+     console.log(image, body)
+     chat.sendMessage(image, { caption: body })
+    })
+    console.log('done')
     break
-
+   case 'bible':
+   const bible = await fetch(url, {
+    method: 'get', // *GET, POST, PUT, DELETE, etc.
+    headers: {
+     'Content-Type': 'application/json',
+    },
+   })
+   if (bible.status !== 200) {
+    sendHelpSuport(message)
+    return
+   }
+   let bibleJson = await result.text() 
+   bibleJson = formatBible(...commands , bibleJson)
+   chat.sendMessage(bibleJson)
+    break
    default:
     break
   }
