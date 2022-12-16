@@ -2,11 +2,8 @@ const { Client, LocalAuth } = require('whatsapp-web.js')
 const qrcode = require('qrcode-terminal')
 const Bot = require('./Bot')
 const dotenv = require('dotenv')
-const Mongoose = require('mongoose')
-const userSchema = require('./Schemes/User')
 const noImage = require('./noImage')
 const { MessageMedia } = require('whatsapp-web.js')
-const fetch = require('node-fetch')
 
 const {
  sendHelpSuport,
@@ -15,33 +12,20 @@ const {
  formatNews,
  formatBible,
 } = require('./utils')
+
+const { bibleTread } = require('./bibleTread')
+const { newsTread } = require('./newsTread')
+const { connectToMongoose } = require('./connectToMongoose')
 if (!process.env.production) dotenv.config()
 
 const media = new MessageMedia('image/png', noImage, 'noImage')
 async function App() {
  console.log('handshaking database')
- try {
-  await Mongoose.connect(process.env.URI, {
-   useNewUrlParser: true,
-   useUnifiedTopology: true,
-  })
-  // Get the default connection
-  const db = Mongoose.connection
-
-  // Bind connection to error event (to get notification of connection errors)
-  db.on('error', console.error.bind(console, 'MongoDB connection error:'))
-
-  var USER = Mongoose.model('bot', userSchema)
- } catch (e) {
-  console.log('handshaking failed')
-  console.error(e)
-  return
- }
+ const USER = await connectToMongoose()
  console.log('handshaking sucessful creating bot')
  try {
   const client = new Client({
    authStrategy: new LocalAuth(),
-   // authTimeoutMs: 120000,
    qrMaxRetries: 5,
    puppeteer: {
     args: ['--no-sandbox'],
@@ -133,7 +117,6 @@ async function App() {
   * handle incoming message and response to them
   * @param {String} message
   */
-
  async function handleMassage(message) {
   const chat = await message.getChat()
   const [endpoint, ...commands] = sanitizeMessage(message.body)
@@ -146,82 +129,17 @@ async function App() {
   console.log(url)
   switch (endpoint) {
    case 'news':
-    const result = await fetch(url, {
-     method: 'get', // *GET, POST, PUT, DELETE, etc.
-     headers: {
-      'Content-Type': 'application/json',
-     },
-    })
-    if (result.status !== 200) {
-     sendHelpSuport(message)
-     return
-    }
-    let json = await result.json()
-    json = json.map(formatNews)
-    // console.log(json)
-    let articles = await Promise.allSettled(json)
-    articles.forEach(({ value }) => {
-     if (!value) return
-     const { image, body } = value
-     console.log(image, body)
-     chat.sendMessage(image, { caption: body })
-    })
-    console.log('done')
+    await newsTread(url, sendHelpSuport, message, formatNews,chat)
     break
    case 'bible':
-   const bible = await fetch(url, {
-    method: 'get', // *GET, POST, PUT, DELETE, etc.
-    headers: {
-     'Content-Type': 'application/json',
-    },
-   })
-   if (bible.status !== 200) {
-    sendHelpSuport(message)
-    return
-   }
-   let bibleJson = await result.text() 
-   bibleJson = formatBible(...commands , bibleJson)
-   chat.sendMessage(bibleJson)
+    await bibleTread(url, sendHelpSuport, message, formatBible, commands,chat)
+    break
+   case 'livescore':
+    
     break
    default:
     break
   }
-
-  //    const command = commands[0]
-  //    const API = stages(command)
-  //    console.log(API)
-  //    try {
-  //     const array = await API
-  //     // API.then(array => {
-  //     //  console.log(array)
-  //     const chat = await message.getChat()
-  //     //  chat.sendMessage(API[0][0],{caption:API[0][1]})
-  //     array.forEach((value, i) => {
-  //      if (i === 0) {
-  //       console.log(value.media, value.body)
-  //      }
-  //      // console.log(value)
-  //      if (typeof value === 'string ') {
-  //       chat.sendMessage(value)
-  //      } else {
-  //       const { media, body } = value
-  //       //  console.log(media,caption)
-  //       //  caption &&
-  //       //  chat.sendMessage(media, {
-  //       //    caption,
-  //       //   })
-  //       //  !caption && chat.sendMessage(media)
-  //       chat.sendMessage(media, { caption: body })
-  //      }
-  //     })
-  // })
-  //    } catch (error) {
-  //     console.log('error sending message ')
-  //     console.error(error)
-  //    }
-  //   } catch (e) {
-  //    console.error(e)
-  //   }
  }
 }
 

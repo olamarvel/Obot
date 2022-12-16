@@ -27,7 +27,7 @@ function sendCommandNotSupported(message) {
  */
 function sanitizeMessage(string = '') {
  let D = string.trim().toLowerCase()
- if (!D.startsWith('!')) return false
+ if (!D.startsWith('!')) return [false]
  D = D.substring(1)
  return D.split(' ')
 }
