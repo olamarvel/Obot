@@ -8,6 +8,7 @@ const _USER = new Schema({
  paid: Boolean,
  number: Number,
  level: Number,
+ name:{type:String,required:true}
 })
 
 module.exports = _USER

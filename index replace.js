@@ -11,10 +11,6 @@ const {
  sendCommandNotSupported,
  formatNews,
  formatBible,
- sendUserNotRegistered,
- sendAwaitingResponse,
- sendUserRegistrationFailed,
- checkForRegistrtionName,
 } = require('./utils')
 
 const { bibleTread } = require('./bibleTread')
@@ -28,7 +24,7 @@ async function App() {
  const USER = await connectToMongoose()
  console.log('handshaking sucessful creating bot')
  try {
-  var client = new Client({
+  const client = new Client({
    authStrategy: new LocalAuth(),
    qrMaxRetries: 5,
    puppeteer: {
@@ -37,20 +33,16 @@ async function App() {
   })
 
   client.on('message', async message => {
-   let name = checkForRegistrtionName(message.body)
-   let user = validateUser(message)
-   if (!name && user === undefined) return
-   client.emit(message.from, name)
-  })
-
-  client.on('message', async message => {
-   const doNotRespond =
-    message.fromMe || message.isStatus || message.from !== '2348103194540@c.us'
-   if (doNotRespond) return
+   if (
+    message.fromMe ||
+    message.isStatus ||
+    message.from !== '2348103194540@c.us'
+   )
+    return
    console.log(message.from)
-   var user = await validateUser(message)
-   if (user === false) sendHelpSuport(message)
-   else if (user === undefined) registrationProcess(message)
+   // return
+   var { user } = await validateUser(message)
+   if (!user) sendHelpSuport(message)
    else handleMassage(message, user)
   })
   client.on('loading_screen', (percent, message) => {
@@ -85,55 +77,33 @@ async function App() {
  }
 
  validateUser.pool = []
- async function registrationProcess(message) {
-  try {
-   sendUserNotRegistered(message)
-   let name = await new Promise((resovle, reject) => {
-    const timeouts = [
-     setTimeout(() => sendAwaitingResponse(message), 30000),
-     setTimeout(() => {
-      reject('tElapsed')
-     }, 60000),
-    ]
-    client.on(message.from, _name => {
-     timeouts.forEach(timeout => {
-      clearTimeout(timeout)
-     })
-     resovle(_name)
-    })
-   })
-   return await validateUserInCloud(message, name)
-  } catch (e) {
-   if (e === 'tElapsed') sendUserRegistrationFailed(message)
-   else console.log(e)
-  }
- }
-
  async function validateUser(message) {
   const id = Number(message.from.split('@')[0])
   let user
   if (validateUser.pool[id]) user = validateUser.pool[id]
   else {
-   let user = await validateUserInCloud(message)
-   if (user === undefined) return undefined
-   if (!user) return false
+   user = await validateUserInCloud(message)
    validateUser.pool[id] = user
    setTimeout(() => {
     validateUser.pool[id] = undefined
    }, 300000)
   }
-  return user
+  return { user }
  }
 
- async function validateUserInCloud(message) {
-  const { from, fromMe, isStatus } = message
+ async function validateUserInCloud({ from, fromMe, isStatus }) {
   if (fromMe || isStatus) return
   try {
    const id = from.split('@')[0]
    let user = await USER.findOne({ number: id })
    if (!user) {
-    sendUserNotRegistered(message)
-    return undefined
+    user = await USER.create({
+     number: id,
+     level: 0,
+     paid: false,
+     ads: 0,
+     join: Date.now(),
+    })
    }
    return user
   } catch (e) {
@@ -141,17 +111,6 @@ async function App() {
    console.log('user not find')
    return false
   }
- }
-
- async function createUser(id, name) {
-  return await USER.create({
-   number: id,
-   level: 0,
-   paid: false,
-   ads: 0,
-   join: Date.now(),
-   name,
-  })
  }
 
  /**
@@ -170,12 +129,13 @@ async function App() {
   console.log(url)
   switch (endpoint) {
    case 'news':
-    await newsTread(url, sendHelpSuport, message, formatNews, chat)
+    await newsTread(url, sendHelpSuport, message, formatNews,chat)
     break
    case 'bible':
-    await bibleTread(url, sendHelpSuport, message, formatBible, commands, chat)
+    await bibleTread(url, sendHelpSuport, message, formatBible, commands,chat)
     break
    case 'livescore':
+    
     break
    default:
     break

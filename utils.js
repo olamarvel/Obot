@@ -6,18 +6,40 @@ function sendHelpSuport(message) {
 }
 
 function sendCommandNotSupported(message) {
- message.reply('your messgage or command is not support ')
- message.reply('check below to see a short list ')
- message.reply('type {_blank_} to  .| ')
- message.reply('type {_blank_} to  .| ')
- message.reply('type {_blank_} to  .| ')
- message.reply('type {_blank_} to  .| ')
- message.reply('type {_blank_} to  .| ')
- message.reply('type {_blank_} to  .| ')
- message.reply('type {_blank_} to  .| ')
- message.reply('type {_blank_} to  .| ')
- message.reply('visit ' + constants.site + '/command .| ')
- message.reply('Or just type help me pls .| ')
+ message.reply(
+  `your messgage or command is not support ' 
+   check below to see a short list ' 
+   type {_blank_} to  .| ' 
+   type {_blank_} to  .| ' 
+   type {_blank_} to  .| ' 
+   type {_blank_} to  .| ' 
+   type {_blank_} to  .| ' 
+   type {_blank_} to  .| ' 
+   type {_blank_} to  .| ' 
+   type {_blank_} to  .| ' 
+   visit ${constants.site}/command .| '
+   Or just type help me pls .| `
+ )
+}
+
+function sendUserNotRegistered(message) {
+ message.reply(`sorry but i can,t find your footprint in my database`)
+ message.reply(
+  `kindly register by sending
+  register {your_name}`
+ )
+}
+
+function sendAwaitingResponse(message) {
+ message.reply(`not to rush you but your response would higly be appreciate`)
+}
+
+function sendUserRegistrationFailed(message) {
+ message.reply(
+  `sorry your registration failed due to timeout
+    you can try again by typing 
+    register {your_name}`
+ )
 }
 
 /**
@@ -30,6 +52,13 @@ function sanitizeMessage(string = '') {
  if (!D.startsWith('!')) return [false]
  D = D.substring(1)
  return D.split(' ')
+}
+
+function checkForRegistrtionName(string = '') {
+ let D = string.trim().toLowerCase()
+ D = D.split(' ')
+ if (D[0] !== 'register') return false
+ return D[1]
 }
 
 const { MessageMedia } = require('whatsapp-web.js')
@@ -81,6 +110,10 @@ function stringify(article) {
 module.exports = {
  sendCommandNotSupported,
  sendHelpSuport,
+ sendUserNotRegistered,
+ sendAwaitingResponse,
+ sendUserRegistrationFailed,
+ checkForRegistrtionName,
  sanitizeMessage,
  formatNews,
  formatBible,
