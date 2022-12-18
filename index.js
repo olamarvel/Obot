@@ -5,6 +5,7 @@ const dotenv = require('dotenv')
 const noImage = require('./noImage')
 const { MessageMedia } = require('whatsapp-web.js')
 
+//test
 const {
  sendHelpSuport,
  sanitizeMessage,
@@ -37,21 +38,19 @@ async function App() {
   })
 
   client.on('message', async message => {
-   let name = checkForRegistrtionName(message.body)
-   let user = validateUser(message)
-   if (!name && user === undefined) return
-   client.emit(message.from, name)
-  })
-
-  client.on('message', async message => {
    const doNotRespond =
     message.fromMe || message.isStatus || message.from !== '2348103194540@c.us'
    if (doNotRespond) return
-   console.log(message.from)
+   const id = Number(message.from.split('@')[0])
    var user = await validateUser(message)
    if (user === false) sendHelpSuport(message)
-   else if (user === undefined) registrationProcess(message)
-   else handleMassage(message, user)
+   else if (user === undefined) {
+    let name = checkForRegistrtionName(message.body)
+    if (!name) {
+     const name = await registrationProcess(message)
+     createUser(id,name)
+    } else client.emit(message.from, name);''
+   } else handleMassage(message, user)
   })
   client.on('loading_screen', (percent, message) => {
    console.log('LOADING SCREEN', percent, message)
@@ -89,20 +88,23 @@ async function App() {
   try {
    sendUserNotRegistered(message)
    let name = await new Promise((resovle, reject) => {
-    const timeouts = [
-     setTimeout(() => sendAwaitingResponse(message), 30000),
-     setTimeout(() => {
-      reject('tElapsed')
-     }, 60000),
-    ]
-    client.on(message.from, _name => {
+    var resovleName = _name => {
      timeouts.forEach(timeout => {
       clearTimeout(timeout)
      })
      resovle(_name)
-    })
+    }
+    const timeouts = [
+     setTimeout(() => sendAwaitingResponse(message), 30000),
+     setTimeout(() => {
+      reject('tElapsed')
+      client.off(message.from,resovleName)
+     }, 60000),
+    ]
+
+    client.on(message.from, resovleName)
    })
-   return await validateUserInCloud(message, name)
+   return name
   } catch (e) {
    if (e === 'tElapsed') sendUserRegistrationFailed(message)
    else console.log(e)
@@ -132,7 +134,6 @@ async function App() {
    const id = from.split('@')[0]
    let user = await USER.findOne({ number: id })
    if (!user) {
-    sendUserNotRegistered(message)
     return undefined
    }
    return user
