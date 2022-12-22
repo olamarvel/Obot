@@ -57,6 +57,7 @@ function sanitizeMessage(string = '') {
 function checkForRegistrtionName(string = '') {
  let D = string.trim().toLowerCase()
  D = D.split(' ')
+ console.log(D)
  if (D[0] !== 'register') return false
  return D[1]
 }
