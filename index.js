@@ -5,12 +5,17 @@ const dotenv = require('dotenv')
 const noImage = require('./noImage')
 const { MessageMedia } = require('whatsapp-web.js')
 
+//test
 const {
  sendHelpSuport,
  sanitizeMessage,
  sendCommandNotSupported,
  formatNews,
  formatBible,
+ sendUserNotRegistered,
+ sendAwaitingResponse,
+ sendUserRegistrationFailed,
+ checkForRegistrtionName,
 } = require('./utils')
 
 const { bibleTread } = require('./bibleTread')
@@ -24,7 +29,7 @@ async function App() {
  const USER = await connectToMongoose()
  console.log('handshaking sucessful creating bot')
  try {
-  const client = new Client({
+  var client = new Client({
    authStrategy: new LocalAuth(),
    qrMaxRetries: 5,
    puppeteer: {
@@ -33,17 +38,29 @@ async function App() {
   })
 
   client.on('message', async message => {
-   if (
-    message.fromMe ||
-    message.isStatus ||
-    message.from !== '2348103194540@c.us'
-   )
-    return
-   console.log(message.from)
-   // return
-   var { user } = await validateUser(message)
-   if (!user) sendHelpSuport(message)
-   else handleMassage(message, user)
+   const doNotRespond =
+    message.fromMe || message.isStatus || message.from !== '2348103194540@c.us'
+   if (doNotRespond) return
+   const id = Number(message.from.split('@')[0])
+   console.log('recieved a messgae from', id)
+   var user = await validateUser(message)
+   if (user === false) sendHelpSuport(message)
+   else if (user === undefined) {
+    console.log('user not registered ')
+    let name = checkForRegistrtionName(message.body)
+    if (!name) {
+     console.log(
+      'did not received a register name at first form client going into registeration mode'
+     )
+     const name = await registrationProcess(message)
+     console.log('message recieved')
+     message.reply('hello ' + name)
+     message.reply(name + 'kindly wait while you are being registered ')
+     const createdUser = createUser(id, name) 
+     createUser && poolUser(id, createdUser)
+     !createUser && sendHelpSuport(message)
+    } else client.emit(message.from, name)
+   } else handleMassage(message, user)
   })
   client.on('loading_screen', (percent, message) => {
    console.log('LOADING SCREEN', percent, message)
@@ -77,39 +94,83 @@ async function App() {
  }
 
  validateUser.pool = []
+ async function registrationProcess(message) {
+  try {
+   sendUserNotRegistered(message)
+   let name = await new Promise((resovle, reject) => {
+    var resovleName = _name => {
+     timeouts.forEach(timeout => {
+      clearTimeout(timeout)
+     })
+     resovle(_name)
+    }
+    const timeouts = [
+     setTimeout(() => sendAwaitingResponse(message), 30000),
+     setTimeout(() => {
+      reject('tElapsed')
+      client.off(message.from, resovleName)
+     }, 60000),
+    ]
+
+    client.on(message.from, resovleName)
+   })
+   return name
+  } catch (e) {
+   if (e === 'tElapsed') sendUserRegistrationFailed(message)
+   else console.log(e)
+  }
+ }
+
  async function validateUser(message) {
   const id = Number(message.from.split('@')[0])
   let user
   if (validateUser.pool[id]) user = validateUser.pool[id]
   else {
-   user = await validateUserInCloud(message)
-   validateUser.pool[id] = user
-   setTimeout(() => {
-    validateUser.pool[id] = undefined
-   }, 300000)
+   let user = await validateUserInCloud(message)
+   if (user === undefined) return undefined
+   if (!user) return false
+   poolUser(id, user)
   }
-  return { user }
+  return user
  }
 
- async function validateUserInCloud({ from, fromMe, isStatus }) {
+ function poolUser(id, user) {
+  validateUser.pool[id] = user
+  setTimeout(() => {
+   validateUser.pool[id] = undefined
+  }, 300000)
+ }
+
+ async function validateUserInCloud(message) {
+  const { from, fromMe, isStatus } = message
   if (fromMe || isStatus) return
   try {
    const id = from.split('@')[0]
    let user = await USER.findOne({ number: id })
    if (!user) {
-    user = await USER.create({
-     number: id,
-     level: 0,
-     paid: false,
-     ads: 0,
-     join: Date.now(),
-    })
+    return undefined
    }
    return user
   } catch (e) {
    console.log(e)
    console.log('user not find')
    return false
+  }
+ }
+
+ async function createUser(id, name) {
+  try {
+   return await USER.create({
+    number: id,
+    level: 0,
+    paid: false,
+    ads: 0,
+    join: Date.now(),
+    name,
+   })
+  } catch (error) {
+    console.error(error)
+    return  undefined 
   }
  }
 
@@ -129,13 +190,12 @@ async function App() {
   console.log(url)
   switch (endpoint) {
    case 'news':
-    await newsTread(url, sendHelpSuport, message, formatNews,chat)
+    await newsTread(url, sendHelpSuport, message, formatNews, chat)
     break
    case 'bible':
-    await bibleTread(url, sendHelpSuport, message, formatBible, commands,chat)
+    await bibleTread(url, sendHelpSuport, message, formatBible, commands, chat)
     break
    case 'livescore':
-    
     break
    default:
     break
