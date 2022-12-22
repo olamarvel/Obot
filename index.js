@@ -1,8 +1,11 @@
-const { Client, LocalAuth } = require('whatsapp-web.js')
+const { Client, RemoteAuth } = require('whatsapp-web.js')
+const Mongoose = require('mongoose')
+const { MongoStore } = require('wwebjs-mongo')
 const qrcode = require('qrcode-terminal')
-//onst Bot = require('../../Bot')
+const Api = require('./API/Api')
+// const Bot = require('../../Bot')
 const dotenv = require('dotenv')
-const noImage = require('../../noImage')
+// const noImage = require('../../noImage')
 const { MessageMedia } = require('whatsapp-web.js')
 
 const {
@@ -11,25 +14,33 @@ const {
  sendCommandNotSupported,
  formatNews,
  formatBible,
-} = require('../../utils')
+} = require('./utils')
 
-const { bibleTread } = require('../../bibleTread')
-const { newsTread } = require('../../newsTread')
-const { connectToMongoose } = require('../../connectToMongoose')
+const { bibleTread } = require('./bibleTread')
+const { newsTread } = require('./newsTread')
+const { connectToMongoose } = require('./connectToMongoose')
 if (!process.env.production) dotenv.config()
 
-const media = new MessageMedia('image/png', noImage, 'noImage')
 async function App() {
  console.log('handshaking database')
  const USER = await connectToMongoose()
  console.log('handshaking sucessful creating bot')
  try {
-  const client = new Client({
-   authStrategy: new LocalAuth(),
+  const store = new MongoStore({ mongoose: Mongoose })
+  var client = new Client({
+   authStrategy: new RemoteAuth({
+    store: store,
+    backupSyncIntervalMs: 300000,
+   }),
    qrMaxRetries: 5,
    puppeteer: {
     args: ['--no-sandbox'],
    },
+  })
+
+  client.on('remote_session_saved', () => {
+   //Do Stuff...
+   console.log('remote session saved')
   })
 
   client.on('message', async message => {
@@ -129,13 +140,12 @@ async function App() {
   console.log(url)
   switch (endpoint) {
    case 'news':
-    await newsTread(url, sendHelpSuport, message, formatNews,chat)
+    await newsTread(url, sendHelpSuport, message, formatNews, chat)
     break
    case 'bible':
-    await bibleTread(url, sendHelpSuport, message, formatBible, commands,chat)
+    await bibleTread(url, sendHelpSuport, message, formatBible, commands, chat)
     break
    case 'livescore':
-    
     break
    default:
     break
@@ -147,10 +157,6 @@ App().catch(e => {
  console.log('App refused to start')
  console.error(e)
 })
-
-{
- a: 1
-}
 
 /**
   improve validation funnctionality to include 

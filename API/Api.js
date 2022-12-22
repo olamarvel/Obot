@@ -2,13 +2,13 @@ const express = require('express')
 const cors = require('cors')
 const requestNews = require('./Endpoint/news')
 const requestBible = require('./Endpoint/bible')
-const  football  = require("./Endpoint/football")
+const football = require('./Endpoint/football')
 
 const app = express()
 const port = 3000
 app.use(cors())
 app.use(express.json())
-app.use('/football',football)
+app.use('/football', football)
 
 app.get('/news/:ISO/:QUERY', (req, res) => {
  console.log('news endpoint hited')
@@ -34,7 +34,8 @@ app.get('/bible/:passage/:chapter/:verse', (req, res) => {
  )
 })
 
-
 app.listen(port, () => {
  console.log(`Example app listening on port ${port}`)
 })
+
+module.exports = app
