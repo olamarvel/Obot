@@ -1,6 +1,6 @@
 const { Client, LocalAuth } = require('whatsapp-web.js')
 const qrcode = require('qrcode-terminal')
-const Bot = require('../../Bot')
+//onst Bot = require('../../Bot')
 const dotenv = require('dotenv')
 const noImage = require('../../noImage')
 const { MessageMedia } = require('whatsapp-web.js')
