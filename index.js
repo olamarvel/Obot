@@ -1,4 +1,6 @@
-const { Client, LocalAuth } = require('whatsapp-web.js')
+const { Client, RemoteAuth } = require('whatsapp-web.js')
+const Mongoose = require('mongoose')
+const { MongoStore } = require('wwebjs-mongo')
 const qrcode = require('qrcode-terminal')
 const Bot = require('./Bot')
 const dotenv = require('dotenv')
@@ -29,12 +31,21 @@ async function App() {
  const USER = await connectToMongoose()
  console.log('handshaking sucessful creating bot')
  try {
+  const store = new MongoStore({ mongoose: Mongoose })
   var client = new Client({
-   authStrategy: new LocalAuth(),
+   authStrategy: new RemoteAuth({
+    store: store,
+    backupSyncIntervalMs: 300000,
+   }),
    qrMaxRetries: 5,
    puppeteer: {
     args: ['--no-sandbox'],
    },
+  })
+
+  client.on('remote_session_saved', () => {
+   //Do Stuff...
+   console.log("remote session saved")
   })
 
   client.on('message', async message => {
@@ -56,7 +67,7 @@ async function App() {
      console.log('message recieved')
      message.reply('hello ' + name)
      message.reply(name + 'kindly wait while you are being registered ')
-     const createdUser = createUser(id, name) 
+     const createdUser = createUser(id, name)
      createUser && poolUser(id, createdUser)
      !createUser && sendHelpSuport(message)
     } else client.emit(message.from, name)
@@ -169,8 +180,8 @@ async function App() {
     name,
    })
   } catch (error) {
-    console.error(error)
-    return  undefined 
+   console.error(error)
+   return undefined
   }
  }
 
