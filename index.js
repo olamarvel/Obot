@@ -7,6 +7,10 @@ const Api = require('./API/Api')
 const dotenv = require('dotenv')
 // const noImage = require('../../noImage')
 const { MessageMedia } = require('whatsapp-web.js')
+const NodeCache = require('node-cache')
+const signIn = require('./stages/signIn')
+const signUp = require('./stages/signUp')
+const CACHE = new NodeCache()
 
 const {
  sendHelpSuport,
@@ -44,18 +48,40 @@ async function App() {
   })
 
   client.on('message', async message => {
-   if (
-    message.fromMe ||
-    message.isStatus ||
-    message.from !== '2348103194540@c.us'
-   )
+   const doNotRespond =
+    message.fromMe || message.isStatus || message.from !== '2348103194540@c.us'
+   if (doNotRespond) return
+   const id = Number(message.from.split('@')[0])
+   const user = await signIn(CACHE, USER, id)
+   if (user === false) {
+    sendHelpSuport(message)
     return
-   console.log(message.from)
-   // return
-   var { user } = await validateUser(message)
-   if (!user) sendHelpSuport(message)
-   else handleMassage(message, user)
+   }
+   if (user !== undefined) {
+    handleMassage(message, user)
+    return
+   }
+   //  user not signin
+   console.log('user not registered ')
+   const name = checkForRegistrtionName(message.body)
+   if (!name) {
+    sendUserNotRegistered(message)
+    return
+   }
+   const succesful = await signUp(CACHE, USER, id, name)
+   if (!succesful) {
+    sendUserRegistrationFailed(message)
+    return
+   }
+   message.reply(
+    ` hello ${name} 
+    you have been registerd successfully 
+    I would send you the help sectin now`
+   )
+   sendCommandNotSupported(message)
+   message.reply('enjoy !!!')
   })
+
   client.on('loading_screen', (percent, message) => {
    console.log('LOADING SCREEN', percent, message)
   })
@@ -88,6 +114,33 @@ async function App() {
  }
 
  validateUser.pool = []
+//  async function registrationProcess(message) {
+//   try {
+//    sendUserNotRegistered(message)
+//    let name = await new Promise((resovle, reject) => {
+//     var resovleName = _name => {
+//      timeouts.forEach(timeout => {
+//       clearTimeout(timeout)
+//      })
+//      resovle(_name)
+//     }
+//     const timeouts = [
+//      setTimeout(() => sendAwaitingResponse(message), 30000),
+//      setTimeout(() => {
+//       reject('tElapsed')
+//       client.off(message.from, resovleName)
+//      }, 60000),
+//     ]
+
+//     client.on(message.from, resovleName)
+//    })
+//    return name
+//   } catch (e) {
+//    if (e === 'tElapsed') sendUserRegistrationFailed(message)
+//    else console.log(e)
+//   }
+//  }
+
  async function validateUser(message) {
   const id = Number(message.from.split('@')[0])
   let user
@@ -121,6 +174,22 @@ async function App() {
    console.log(e)
    console.log('user not find')
    return false
+  }
+ }
+
+ async function createUser(id, name) {
+  try {
+   return await USER.create({
+    number: id,
+    level: 0,
+    paid: false,
+    ads: 0,
+    join: Date.now(),
+    name,
+   })
+  } catch (error) {
+   console.error(error)
+   return undefined
   }
  }
 
