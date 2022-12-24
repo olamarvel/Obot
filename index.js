@@ -5,6 +5,8 @@ const dotenv = require('dotenv')
 const noImage = require('./noImage')
 const { MessageMedia } = require('whatsapp-web.js')
 const NodeCache = require( "node-cache" );
+const signIn = require('./stages/signIn')
+const signUp = require('./stages/signUp')
 const CACHE = new NodeCache();
 
 //test
@@ -44,7 +46,8 @@ async function App() {
    if (doNotRespond) return
    const id = Number(message.from.split('@')[0])
    console.log('recieved a messgae from', id)
-   var user = await validateUser(message)
+    const user = await signIn(CACHE,USER,id)
+  //  var user = await validateUser(message)
    if (user === false) sendHelpSuport(message)
    else if (user === undefined) {
     console.log('user not registered ')
