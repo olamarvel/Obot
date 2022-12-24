@@ -36,9 +36,13 @@ function sendAwaitingResponse(message) {
 
 function sendUserRegistrationFailed(message) {
  message.reply(
-  `sorry your registration failed due to timeout
+  ` sorry your registration failed due to an unknow issue
     you can try again by typing 
-    register {your_name}`
+    register {your_name}
+    
+    And if problem persist , try speaking to a human
+    ${constants.onwer}
+    `
  )
 }
 

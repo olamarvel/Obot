@@ -1,6 +1,6 @@
 module.exports = async function (CACHE, USER, number, name) {
  try {
-  if (!name) return 0
+  if (!name) throw new Error('no name  provided')
   const user = await USER.create({
    number,
    level: 0,
@@ -10,9 +10,9 @@ module.exports = async function (CACHE, USER, number, name) {
    name,
   })
   CACHE.set(number.toString(), user, 300000)
-  return user
+  return true
  } catch (error) {
   console.error(error)
-  return -1
+  return false
  }
 }

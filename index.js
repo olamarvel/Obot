@@ -1,13 +1,13 @@
 const { Client, LocalAuth } = require('whatsapp-web.js')
 const qrcode = require('qrcode-terminal')
-const Bot = require('./Bot')
+// const Bot = require('./Bot')
 const dotenv = require('dotenv')
 const noImage = require('./noImage')
 const { MessageMedia } = require('whatsapp-web.js')
-const NodeCache = require( "node-cache" );
+const NodeCache = require('node-cache')
 const signIn = require('./stages/signIn')
 const signUp = require('./stages/signUp')
-const CACHE = new NodeCache();
+const CACHE = new NodeCache()
 
 //test
 const {
@@ -37,7 +37,7 @@ async function App() {
    qrMaxRetries: 5,
    puppeteer: {
     args: ['--no-sandbox'],
-   },   
+   },
   })
 
   client.on('message', async message => {
@@ -45,28 +45,36 @@ async function App() {
     message.fromMe || message.isStatus || message.from !== '2348103194540@c.us'
    if (doNotRespond) return
    const id = Number(message.from.split('@')[0])
-   console.log('recieved a messgae from', id)
-    const user = await signIn(CACHE,USER,id)
-  //  var user = await validateUser(message)
-   if (user === false) sendHelpSuport(message)
-   else if (user === undefined) {
-    console.log('user not registered ')
-    PREUSER.findOne({number:id})
-    let name = checkForRegistrtionName(message.body)
-    if (!name) {
-     console.log(
-      'did not received a register name at first form client going into registeration mode'
-     ) 
-     const name = await registrationProcess(message)
-     console.log('message recieved')
-     message.reply('hello ' + name)
-     message.reply(name + 'kindly wait while you are being registered ')
-     const createdUser = createUser(id, name) 
-     createUser && poolUser(id, createdUser)
-     !createUser && sendHelpSuport(message)
-    } else client.emit(message.from, name)
-   } else handleMassage(message, user)
+   const user = await signIn(CACHE, USER, id)
+   if (user === false) {
+    sendHelpSuport(message)
+    return
+   }
+   if (user !== undefined) {
+    handleMassage(message, user)
+    return
+   }
+   //  user not signin
+   console.log('user not registered ')
+   const name = checkForRegistrtionName(message.body)
+   if (!name) {
+    sendUserNotRegistered(message)
+    return
+   }
+   const succesful = await signUp(CACHE, USER, id, name)
+   if (!succesful) {
+    sendUserRegistrationFailed(message)
+    return
+   }
+   message.reply(
+    ` hello ${name} 
+    you have been registerd successfully 
+    I would send you the help sectin now`
+   )
+   sendCommandNotSupported(message)
+   message.reply('enjoy !!!')
   })
+
   client.on('loading_screen', (percent, message) => {
    console.log('LOADING SCREEN', percent, message)
   })
@@ -99,32 +107,32 @@ async function App() {
  }
 
  validateUser.pool = []
- async function registrationProcess(message) {
-  try {
-   sendUserNotRegistered(message)
-   let name = await new Promise((resovle, reject) => {
-    var resovleName = _name => {
-     timeouts.forEach(timeout => {
-      clearTimeout(timeout)
-     })
-     resovle(_name)
-    }
-    const timeouts = [
-     setTimeout(() => sendAwaitingResponse(message), 30000),
-     setTimeout(() => {
-      reject('tElapsed')
-      client.off(message.from, resovleName)
-     }, 60000),
-    ]
+//  async function registrationProcess(message) {
+//   try {
+//    sendUserNotRegistered(message)
+//    let name = await new Promise((resovle, reject) => {
+//     var resovleName = _name => {
+//      timeouts.forEach(timeout => {
+//       clearTimeout(timeout)
+//      })
+//      resovle(_name)
+//     }
+//     const timeouts = [
+//      setTimeout(() => sendAwaitingResponse(message), 30000),
+//      setTimeout(() => {
+//       reject('tElapsed')
+//       client.off(message.from, resovleName)
+//      }, 60000),
+//     ]
 
-    client.on(message.from, resovleName)
-   })
-   return name
-  } catch (e) {
-   if (e === 'tElapsed') sendUserRegistrationFailed(message)
-   else console.log(e)
-  }
- }
+//     client.on(message.from, resovleName)
+//    })
+//    return name
+//   } catch (e) {
+//    if (e === 'tElapsed') sendUserRegistrationFailed(message)
+//    else console.log(e)
+//   }
+//  }
 
  async function validateUser(message) {
   const id = Number(message.from.split('@')[0])
@@ -174,8 +182,8 @@ async function App() {
     name,
    })
   } catch (error) {
-    console.error(error)
-    return  undefined 
+   console.error(error)
+   return undefined
   }
  }
 
