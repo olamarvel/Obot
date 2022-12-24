@@ -4,6 +4,8 @@ const Bot = require('./Bot')
 const dotenv = require('dotenv')
 const noImage = require('./noImage')
 const { MessageMedia } = require('whatsapp-web.js')
+const NodeCache = require( "node-cache" );
+const CACHE = new NodeCache();
 
 //test
 const {
@@ -23,7 +25,6 @@ const { newsTread } = require('./newsTread')
 const { connectToMongoose } = require('./connectToMongoose')
 if (!process.env.production) dotenv.config()
 
-const media = new MessageMedia('image/png', noImage, 'noImage')
 async function App() {
  console.log('handshaking database')
  const USER = await connectToMongoose()
@@ -34,7 +35,7 @@ async function App() {
    qrMaxRetries: 5,
    puppeteer: {
     args: ['--no-sandbox'],
-   },
+   },   
   })
 
   client.on('message', async message => {
@@ -47,11 +48,12 @@ async function App() {
    if (user === false) sendHelpSuport(message)
    else if (user === undefined) {
     console.log('user not registered ')
+    PREUSER.findOne({number:id})
     let name = checkForRegistrtionName(message.body)
     if (!name) {
      console.log(
       'did not received a register name at first form client going into registeration mode'
-     )
+     ) 
      const name = await registrationProcess(message)
      console.log('message recieved')
      message.reply('hello ' + name)
