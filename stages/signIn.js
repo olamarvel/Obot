@@ -5,7 +5,7 @@ module.exports = async function (CACHE,USER, number ) {
   if (cache) return cache
   const exist = await USER.findOne({ number })
   console.log(`exist`, exist)
-  if (exist) return undefi
+  if (exist) return exist
  } catch (error) {
   console.error(error)
   return false
