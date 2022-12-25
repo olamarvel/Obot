@@ -134,7 +134,23 @@ async function App() {
    case 'bible':
     await bibleTread(url, sendHelpSuport, message, formatBible, commands, chat)
     break
-   case 'livescore':
+   case 'football':
+    const football = await fetch(url, {
+     method: 'get',
+     headers: {
+      'Content-Type': 'application/json',
+     },
+    })
+    if (football.status !== 200) {
+     sendHelpSuport(message)
+     return
+    }
+    switch (commands[0]) {
+     case 'live':
+      const live = await football.json()
+      console.log(`live`, live)
+      break
+    }
     break
    default:
     break
