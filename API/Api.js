@@ -7,7 +7,7 @@ const football = require('./Endpoint/football')
 const app = express()
 const port = 3000
 app.use(cors())
-app.use(express.json())
+app.use(express.json()) 
 app.use('/football', football)
 
 app.get('/news/:ISO/:QUERY', (req, res) => {
