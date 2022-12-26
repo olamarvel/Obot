@@ -1,0 +1,20 @@
+premier League england =>PML
+champion league => CML
+Laliga => Laliga
+Bundesliga => Bdes
+serie A => SEA
+Europa league => Eropa
+Ligue 1 => Ligue 1
+FA cup => FAC
+EURO => EURO
+
+how to get matches in a table
+by date 
+by name of match
+by live tag 
+
+exapmle !football Euro today
+!football Euro 20221225
+!football Euro live 
+!football Euro nigeria-agnatin 
+

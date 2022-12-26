@@ -41,6 +41,7 @@ var baseUrl = 'https://www.fotmob.com/api';
 var Fotmob = /** @class */ (function () {
     function Fotmob() {
         this.map = new Map();
+        this.baseUrl = baseUrl
         this.matchesUrl = baseUrl + '/matches?';
         this.leaguesUrl = baseUrl + '/leagues?';
         this.teamsUrl = baseUrl + '/teams?';
